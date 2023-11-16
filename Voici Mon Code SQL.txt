@@ -1,0 +1,51 @@
+
+Je n'ai pas réussi à enregistrer l'execution de mon code SQL sur Xampp (PhpMyAdmin) donc je le recopie ici. merci.
+
+
+
+
+-- 1. Lister le nombre de dossiers d'infractions par département
+SELECT Département, COUNT(*) AS nombre_dossiers
+FROM radars
+GROUP BY Département;
+
+-- 2. a) Déterminer l'autoroute totalisant le plus grand nombre de dossiers d'infractions (commençant par "A")
+SELECT Nom_de_la_voie AS autoroute, SUM(Nombre_de_dossiers_dinfractions) AS total_infractions_autoroute
+FROM radars
+WHERE Nom_de_la_voie LIKE 'A%'
+GROUP BY Nom_de_la_voie
+ORDER BY total_infractions_autoroute DESC
+LIMIT 1;
+
+-- 2. b) Déterminer la route départementale totalisant le plus grand nombre de dossiers d'infractions (commençant par "RD")
+SELECT Nom_de_la_voie AS route_departementale, SUM(Nombre_de_dossiers_dinfractions) AS total_infractions_route_departementale
+FROM radars
+WHERE Nom_de_la_voie LIKE 'RD%'
+GROUP BY Nom_de_la_voie
+ORDER BY total_infractions_route_departementale DESC
+LIMIT 1;
+
+-- 3. a) Calculer la moyenne du nombre d'infractions par radar
+SELECT id AS radar_id, AVG(Nombre_de_dossiers_dinfractions) AS moyenne_infractions
+FROM radars
+GROUP BY radar_id
+ORDER BY moyenne_infractions DESC
+LIMIT 1;
+
+-- 3. b) Calculer le total estimé des infractions sur toute la durée de mise en service du radar en fonction de la moyenne du nombre d'infractions par radar
+SELECT id AS radar_id_max_moyenne, AVG(Nombre_de_dossiers_dinfractions) AS moyenne_infractions_max,
+       AVG(Nombre_de_dossiers_dinfractions) * DATEDIFF(NOW(), MIN(Date_de_mise_en_service)) AS total_infractions_estime
+FROM radars
+WHERE id = (SELECT id AS radar_id
+            FROM radars
+            GROUP BY radar_id
+            ORDER BY AVG(Nombre_de_dossiers_dinfractions) DESC
+            LIMIT 1)
+GROUP BY radar_id_max_moyenne;
+
+-- 3. c) Estimer le radar comptant possiblement le plus d'infractions au total
+SELECT id AS radar_id_max_total_infractions
+FROM radars
+GROUP BY id
+ORDER BY SUM(Nombre_de_dossiers_dinfractions) DESC
+LIMIT 1;
